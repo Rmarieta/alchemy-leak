@@ -1,0 +1,34 @@
+services:
+  db-alchemy:
+    image: postgres:15.2
+    container_name: db-alchemy
+    environment:
+      POSTGRES_USER: psql
+      POSTGRES_PASSWORD: pswd
+      POSTGRES_DB: db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-v:/var/lib/postgresql/datatmp
+    healthcheck:
+      # checking when the database is ready for the flask app to wait
+      test: ["CMD-SHELL", "pg_isready -U psql -d db"]
+      interval: 5s
+      timeout: 20s
+      retries: 5
+
+  alchemy-test:
+    build: ./alchemy
+    container_name: alchemy-test
+    depends_on:
+      db-alchemy:
+        # waiting for the database to be ready
+        condition: service_healthy
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./alchemy:/app
+
+# to persist container volumes
+volumes:
+  db-v:
